@@ -1,0 +1,10 @@
+node_modules/
+.npm-cache/
+dist/
+*.tsbuildinfo
+.env
+uploads/*
+!uploads/.gitkeep
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
