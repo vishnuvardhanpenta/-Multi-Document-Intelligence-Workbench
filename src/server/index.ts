@@ -81,7 +81,7 @@ app.post('/api/analyze', async (req, res) => {
     db.prepare('INSERT INTO analyses (prompt,result_json,created_at) VALUES (?,?,?)').run(input.data.prompt, JSON.stringify(result), new Date().toISOString());
     return res.json(result);
   } catch (error) {
-    if (error instanceof Error && error.message.startsWith('OPENAI_API_KEY is not configured')) return res.status(503).json({ error: error.message });
+    if (error instanceof Error && error.message.startsWith('GEMINI_API_KEY is not configured')) return res.status(503).json({ error: error.message });
     console.error('LLM analysis request failed:', error instanceof Error ? error.message : 'unknown error');
     return res.status(502).json({ error: 'LLM analysis failed or returned invalid structured output. Please retry.' });
   }
