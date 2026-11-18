@@ -41,7 +41,7 @@ export default function App() {
   }
   async function copy() { if (result) await navigator.clipboard.writeText(JSON.stringify(result, null, 2)); }
   return <main className="shell">
-    <header className="topbar"><a className="brand" href="#"><span className="brand-icon">W</span> WREN<span className="brand-sub"> / INTELLIGENCE</span></a><span className="top-label">DOCUMENT WORKSPACE <i /></span></header>
+    <header className="topbar"><a className="brand" href="#">WREN<span className="brand-sub"> / INTELLIGENCE</span></a></header>
     <section className="hero"><div className="eyebrow">MULTI-DOCUMENT INTELLIGENCE</div><h1>Find the signal<br/><em>between the lines.</em></h1><p>Bring your documents together. Ask a focused question. Get sourced insights you can trace back to the page.</p></section>
     <div className="workspace">
       <section className="panel source-panel">
@@ -62,7 +62,7 @@ export default function App() {
         <div className="privacy"><span>◇</span><p>Files are processed locally for this demo. Use synthetic documents only.</p></div>
       </section>
       <section className="panel prompt-panel">
-        <div className="section-title"><span className="step">02</span><div><h2>Set your instruction</h2><p>Tell the workbench what to look for</p><small className="mock-disclosure">Deterministic mock analysis · No external LLM calls</small></div></div>
+        <div className="section-title"><span className="step">02</span><div><h2>Set your instruction</h2><p>Tell the workbench what to look for</p><small className="llm-disclosure">OpenAI LLM analysis · Uploaded text is sent to OpenAI</small></div></div>
         <label htmlFor="prompt">ANALYSIS INSTRUCTION</label><textarea id="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} maxLength={1000} placeholder="e.g. Compare financial figures and highlight mismatches…"/><div className="char-count">{prompt.length} / 1,000</div>
         <div className="suggestions"><span>TRY AN EXAMPLE</span>{['Find name and address mismatches', 'Extract dates and obligations'].map(text => <button key={text} onClick={() => setPrompt(text)}>{text} <span>↗</span></button>)}</div>
         <button className="analyze" onClick={() => void analyze()} disabled={busy || documents.length === 0 || prompt.trim().length < 5}>{busy ? 'Working…' : 'Run analysis'} <span>→</span></button>
@@ -73,6 +73,5 @@ export default function App() {
       <div className="results-head"><div className="section-title"><span className="step">03</span><div><h2>Analysis results</h2><p>Findings with evidence from your source documents</p></div></div>{result && <button className="copy" onClick={() => void copy()}>Copy results ↗</button>}</div>
       {!result ? <div className="results-empty"><span>✳</span><p>Your analysis will appear here.<br/><small>Upload documents and run an instruction to get started.</small></p></div> : <div className="result-body"><p className="summary">{result.summary}</p><div className="legend"><span className="pill discrepancy">Discrepancy</span><span className="pill agreement">Agreement</span><span className="pill missing">Missing</span><span className="pill observation">Observation</span></div>{result.findings.length ? <div className="findings">{result.findings.map((finding, i) => <article className="finding" key={`${finding.title}-${i}`}><span className={`pill ${finding.category}`}>{finding.category}</span><div className="finding-copy"><h3>{finding.title}</h3><p>{finding.detail}</p><div className="evidence">{finding.sources.map((source, j) => <span key={`${source.documentId}-${j}`}><b>{source.filename}</b> · “{source.excerpt}”</span>)}</div></div></article>)}</div> : <p className="none">No comparison findings were generated for these inputs.</p>}<p className="interpretation">{result.interpretationNote}</p></div>}
     </section>
-    <footer><span>WREN WORKBENCH <b>·</b> SYNTHETIC DATA ENVIRONMENT</span><span>BUILT FOR TRACEABLE DECISIONS</span></footer>
   </main>;
 }

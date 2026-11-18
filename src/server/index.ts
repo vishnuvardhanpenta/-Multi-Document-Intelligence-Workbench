@@ -6,8 +6,9 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { z } from 'zod';
 import { db } from './db.js';
-import { analyzeDocuments, extractFacts } from './analysis.js';
+import { extractFacts } from './analysis.js';
 import { extractDocumentText } from './parsers.js';
+import { analyzeWithLlm } from './llm.js';
 import type { DocumentRecord, Fact } from '../shared/types.js';
 
 const app = express();
@@ -70,14 +71,20 @@ app.delete('/api/documents/:id', (req, res) => {
   const result = db.prepare('DELETE FROM documents WHERE id = ?').run(id);
   return result.changes ? res.status(204).end() : res.status(404).json({ error: 'Document not found.' });
 });
-app.post('/api/analyze', (req, res) => {
+app.post('/api/analyze', async (req, res) => {
   const input = z.object({ prompt: z.string().trim().min(5).max(1000) }).safeParse(req.body);
   if (!input.success) return res.status(400).json({ error: 'Enter an instruction between 5 and 1,000 characters.' });
   const documents = listDocuments();
   if (!documents.length) return res.status(400).json({ error: 'Upload documents before starting an analysis.' });
-  const result = analyzeDocuments(documents, input.data.prompt);
-  db.prepare('INSERT INTO analyses (prompt,result_json,created_at) VALUES (?,?,?)').run(input.data.prompt, JSON.stringify(result), new Date().toISOString());
-  return res.json(result);
+  try {
+    const result = await analyzeWithLlm(documents, input.data.prompt);
+    db.prepare('INSERT INTO analyses (prompt,result_json,created_at) VALUES (?,?,?)').run(input.data.prompt, JSON.stringify(result), new Date().toISOString());
+    return res.json(result);
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('OPENAI_API_KEY is not configured')) return res.status(503).json({ error: error.message });
+    console.error('LLM analysis request failed:', error instanceof Error ? error.message : 'unknown error');
+    return res.status(502).json({ error: 'LLM analysis failed or returned invalid structured output. Please retry.' });
+  }
 });
 
 app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
