@@ -51,7 +51,14 @@ export default function App() {
           <input ref={inputRef} type="file" multiple accept=".pdf,.txt,.csv,application/pdf,text/plain,text/csv" hidden onChange={e => e.target.files && void upload(e.target.files)} />
         </div>
         <div className="file-header"><span>UPLOADED FILES</span><span>{documents.length.toString().padStart(2, '0')}</span></div>
-        {documents.length ? <div className="file-list">{documents.map(doc => <div className="file-row" key={doc.id}><span className="file-type">{doc.filename.split('.').pop()?.toUpperCase()}</span><div className="file-info"><strong>{doc.filename}</strong><small>{fmt(doc.size)} · {doc.facts?.length ?? 0} facts extracted</small></div><span className="status-dot" title="Processed"/><button className="remove" aria-label={`Remove ${doc.filename}`} onClick={() => void remove(doc.id)}>×</button></div>)}</div> : <div className="empty-files">Your uploaded documents will appear here.</div>}
+        {documents.length ? <div className="file-list">{documents.map(doc => <div className="file-row" key={doc.id}>
+          <span className="file-type">{doc.filename.split('.').pop()?.toUpperCase()}</span>
+          <div className="file-info"><strong>{doc.filename}</strong><small>{fmt(doc.size)} · {doc.facts?.length ?? 0} facts extracted</small>
+            {doc.textTruncated && <small className="truncate-note">Text capped at 200,000 characters</small>}
+            {doc.facts?.length ? <details className="fact-preview"><summary>View extracted facts</summary><ul>{doc.facts.map((fact, i) => <li key={`${fact.label}-${i}`}><b>{fact.label}:</b> {fact.value}<small>Evidence: “{fact.evidence}”</small></li>)}</ul></details> : <small className="no-facts">No supported facts recognized</small>}
+          </div>
+          <span className="status-dot" title="Processed"/><button className="remove" aria-label={`Remove ${doc.filename}`} onClick={() => void remove(doc.id)}>×</button>
+        </div>)}</div> : <div className="empty-files">Your uploaded documents will appear here.</div>}
         <div className="privacy"><span>◇</span><p>Files are processed locally for this demo. Use synthetic documents only.</p></div>
       </section>
       <section className="panel prompt-panel">

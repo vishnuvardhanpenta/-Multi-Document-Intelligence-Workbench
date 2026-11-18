@@ -29,8 +29,10 @@ Create a Node Web Service from this repository with build command `npm ci && npm
 
 - Supported inputs are PDF, TXT, and CSV. PDF text extraction uses `pdf-parse`; scanned/image-only PDFs need OCR and return a readable error.
 - The analysis implementation is a deterministic mock, so no LLM credentials or network calls are required. It recognizes a focused set of common fields and compares matching labels across documents.
-- Users can upload up to 10 files per request, 10 MB each by default, list them, remove them, issue a natural language instruction, see per-document extracted facts and sourced findings, and copy the structured JSON output.
+- Users can upload up to 10 files per request, 10 MB each by default, list them, remove them, issue a natural language instruction, inspect extracted facts per document, see sourced findings, and copy the structured JSON output.
+- The mock analyzer uses prompt keywords to focus comparisons on requested fields and can extract common obligations. It compares text values without normalizing equivalent currency/date formats.
 - Uploads are held in memory only and extracted text/facts are saved to SQLite. The demo does not persist original uploaded file bytes.
+- Documents larger than 200,000 extracted characters are capped for analysis; the interface now marks documents that were capped.
 - The request prompt is recorded with each result; analysis is re-run over all currently stored documents.
 
 ## AI and decision disclosure
