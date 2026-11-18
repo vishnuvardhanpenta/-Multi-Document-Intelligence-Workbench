@@ -10,7 +10,7 @@
     "dev:client": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "start": "tsx src/server/index.ts",
-    "test": "tsx --test src/server/analysis.test.ts"
+    "test": "node --import tsx --test src/server/analysis.test.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
