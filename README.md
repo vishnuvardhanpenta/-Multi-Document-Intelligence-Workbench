@@ -31,6 +31,7 @@ Create a Node Web Service from this repository with build command `npm ci && npm
 - The analysis implementation is a deterministic mock, so no LLM credentials or network calls are required. It recognizes a focused set of common fields and compares matching labels across documents.
 - Users can upload up to 10 files per request, 10 MB each by default, list them, remove them, issue a natural language instruction, inspect extracted facts per document, see sourced findings, and copy the structured JSON output.
 - The mock analyzer uses prompt keywords to focus comparisons on requested fields and can extract common obligations. It compares text values without normalizing equivalent currency/date formats.
+- An upload batch is fully validated and parsed before database writes begin; all rows are inserted in one SQLite transaction, so an invalid later file does not leave earlier files saved.
 - Uploads are held in memory only and extracted text/facts are saved to SQLite. The demo does not persist original uploaded file bytes.
 - Documents larger than 200,000 extracted characters are capped for analysis; the interface now marks documents that were capped.
 - The request prompt is recorded with each result; analysis is re-run over all currently stored documents.
@@ -41,7 +42,8 @@ This reference implementation was created with Codex. The implementation decisio
 
 ## Known limitations
 
-- The mock recognizer uses simple patterns and is not robust to arbitrary layouts, languages, OCR artifacts, or ambiguous values.
+- Analysis is a deterministic pattern/keyword mock with no external LLM call. It does not genuinely reason about arbitrary requests such as a company's overall financial position, and missing-information findings are limited to supported fields and prompt keywords.
+- The mock recognizer uses simple patterns and is not robust to arbitrary layouts, languages, OCR artifacts, or ambiguous values. Equivalent values such as `$1 million` and `$1,000,000` are not normalized.
 - CSV files are ingested as text, not interpreted as typed tables. There is no image OCR, chunking, background job queue, auth, or per-user data isolation.
 - Database rows store extracted content without a retention policy. The app is intended for local synthetic-data evaluation only, not real customer or banking documents.
 - Local development uses the Vite API proxy. In production the frontend calls the same-origin API, and the server binds to all interfaces for the host proxy.
@@ -54,7 +56,7 @@ This reference implementation was created with Codex. The implementation decisio
 
 ## Productionisation
 
-Replace the mock analyzer behind the analysis module with a provider adapter that requests schema-constrained JSON, validates it, and preserves document IDs and quoted source spans. Add OCR for image/scanned documents, page-aware chunking and retrieval for large files, asynchronous processing, retries and observability, authentication, tenant isolation, encrypted object storage, retention/deletion workflows, and a comprehensive test suite. Keep evidence-grounding checks and human review for high-impact decisions.
+Replace the mock analyzer behind the analysis module with a provider adapter that requests schema-constrained JSON, validates it, and preserves document IDs and quoted source spans. Use managed PostgreSQL for relational data and persistent object storage for original files. Add OCR for image/scanned documents, page-aware chunking and retrieval for large files, asynchronous processing, retries and observability, authentication, tenant isolation, retention/deletion workflows, and a comprehensive test suite. Keep evidence-grounding checks and human review for high-impact decisions.
 
 ## Automated test
 

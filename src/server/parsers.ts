@@ -23,6 +23,10 @@ function parseCsvRows(input: string): string[][] {
   if (quoted) throw new Error('CSV has an unclosed quoted field.');
   row.push(cell.trim());
   if (row.some(value => value.length)) rows.push(row);
+  const expectedColumns = rows[0]?.length ?? 0;
+  if (expectedColumns < 2) throw new Error('CSV must contain at least two columns.');
+  const malformedRow = rows.findIndex(record => record.length !== expectedColumns);
+  if (malformedRow >= 0) throw new Error(`CSV row ${malformedRow + 1} has ${rows[malformedRow].length} columns; expected ${expectedColumns}.`);
   return rows;
 }
 
@@ -44,6 +48,7 @@ export async function extractDocumentText(filename: string, buffer: Buffer): Pro
     let text: string;
     try { text = new TextDecoder('utf-8', { fatal: true }).decode(buffer); }
     catch { throw new Error('File is not valid UTF-8 text.'); }
+    if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(text)) throw new Error('Text file contains binary or unsupported control characters.');
     return extension === '.csv' ? csvToEvidence(text) : text;
   }
   throw new Error('Unsupported format. Use PDF, TXT, or CSV.');

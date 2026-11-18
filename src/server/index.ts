@@ -29,11 +29,13 @@ app.post('/api/documents', upload.array('files', 10), async (req, res) => {
   const files = (req.files ?? []) as Express.Multer.File[];
   if (!files.length) return res.status(400).json({ error: 'Choose at least one file.' });
   const allowed = new Set(['.pdf', '.txt', '.csv']);
-  const added: DocumentRecord[] = [];
+  const invalidFile = files.find(file => !allowed.has(path.extname(file.originalname).toLowerCase()) || file.size === 0);
+  if (invalidFile) {
+    if (!invalidFile.size) return res.status(400).json({ error: `${invalidFile.originalname}: file is empty.` });
+    return res.status(415).json({ error: `${invalidFile.originalname}: unsupported format. Use PDF, TXT, or CSV.` });
+  }
+  const prepared: Omit<DocumentRecord, 'id'>[] = [];
   for (const file of files) {
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (!allowed.has(ext)) return res.status(415).json({ error: `${file.originalname}: unsupported format. Use PDF, TXT, or CSV.` });
-    if (file.size === 0) return res.status(400).json({ error: `${file.originalname}: file is empty.` });
     try {
       const raw = await extractDocumentText(file.originalname, file.buffer);
       const normalizedText = raw.replace(/\u0000/g, '').trim();
@@ -41,13 +43,24 @@ app.post('/api/documents', upload.array('files', 10), async (req, res) => {
       const extractedText = normalizedText.slice(0, 200_000);
       if (!extractedText) return res.status(422).json({ error: `${file.originalname}: no readable text found. Scanned PDFs need OCR.` });
       const facts: Fact[] = extractFacts(extractedText);
-      const info = { filename: path.basename(file.originalname).slice(0, 180), mime_type: file.mimetype || 'application/octet-stream', size: file.size, uploaded_at: new Date().toISOString(), extracted_text: extractedText, facts_json: JSON.stringify(facts), text_truncated: Number(textTruncated) };
-      const inserted = db.prepare('INSERT INTO documents (filename,mime_type,size,uploaded_at,extracted_text,facts_json,text_truncated) VALUES (@filename,@mime_type,@size,@uploaded_at,@extracted_text,@facts_json,@text_truncated)').run(info);
-      added.push({ id: Number(inserted.lastInsertRowid), filename: info.filename, mimeType: info.mime_type, size: info.size, uploadedAt: info.uploaded_at, extractedText, textTruncated, facts });
+      prepared.push({ filename: path.basename(file.originalname).slice(0, 180), mimeType: file.mimetype || 'application/octet-stream', size: file.size, uploadedAt: new Date().toISOString(), extractedText, textTruncated, facts });
     } catch (error) {
       const detail = error instanceof Error ? error.message : 'Could not read this file';
       return res.status(422).json({ error: `${file.originalname}: ${detail}` });
     }
+  }
+  const added: DocumentRecord[] = [];
+  const insertDocument = db.prepare('INSERT INTO documents (filename,mime_type,size,uploaded_at,extracted_text,facts_json,text_truncated) VALUES (@filename,@mimeType,@size,@uploadedAt,@extractedText,@factsJson,@textTruncated)');
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    for (const document of prepared) {
+      const inserted = insertDocument.run({ filename: document.filename, mimeType: document.mimeType, size: document.size, uploadedAt: document.uploadedAt, extractedText: document.extractedText, factsJson: JSON.stringify(document.facts), textTruncated: Number(document.textTruncated) });
+      added.push({ ...document, id: Number(inserted.lastInsertRowid) });
+    }
+    db.exec('COMMIT');
+  } catch (error) {
+    try { db.exec('ROLLBACK'); } catch { /* preserve the original database error */ }
+    throw error;
   }
   return res.status(201).json(added.map(({ extractedText: _text, ...doc }) => doc));
 });

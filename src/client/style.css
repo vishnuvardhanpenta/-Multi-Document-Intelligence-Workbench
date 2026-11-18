@@ -46,3 +46,4 @@ button:focus-visible,.text-button:focus-visible,.suggestions button:focus-visibl
 }
 @media(max-width:360px){.shell{padding:0 10px}.top-label{font-size:7px}.hero h1{font-size:31px}.workspace>.panel,.results{padding:15px}.file-type{flex-basis:30px;width:30px;height:30px}.file-row{gap:6px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+.mock-disclosure{display:block;color:#8296a0;font:9px 'DM Mono',monospace;margin-top:5px;letter-spacing:.025em}

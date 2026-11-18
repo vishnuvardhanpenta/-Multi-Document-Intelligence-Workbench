@@ -62,7 +62,7 @@ export default function App() {
         <div className="privacy"><span>◇</span><p>Files are processed locally for this demo. Use synthetic documents only.</p></div>
       </section>
       <section className="panel prompt-panel">
-        <div className="section-title"><span className="step">02</span><div><h2>Set your instruction</h2><p>Tell the workbench what to look for</p></div></div>
+        <div className="section-title"><span className="step">02</span><div><h2>Set your instruction</h2><p>Tell the workbench what to look for</p><small className="mock-disclosure">Deterministic mock analysis · No external LLM calls</small></div></div>
         <label htmlFor="prompt">ANALYSIS INSTRUCTION</label><textarea id="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} maxLength={1000} placeholder="e.g. Compare financial figures and highlight mismatches…"/><div className="char-count">{prompt.length} / 1,000</div>
         <div className="suggestions"><span>TRY AN EXAMPLE</span>{['Find name and address mismatches', 'Extract dates and obligations'].map(text => <button key={text} onClick={() => setPrompt(text)}>{text} <span>↗</span></button>)}</div>
         <button className="analyze" onClick={() => void analyze()} disabled={busy || documents.length === 0 || prompt.trim().length < 5}>{busy ? 'Working…' : 'Run analysis'} <span>→</span></button>
