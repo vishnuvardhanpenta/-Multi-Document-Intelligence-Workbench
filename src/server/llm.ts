@@ -54,7 +54,7 @@ const responseJsonSchema = {
 } as const;
 
 const apiKey = process.env.GEMINI_API_KEY;
-export const configuredModel = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
+export const configuredModel = process.env.GEMINI_MODEL ?? 'gemini-3.8-flash';
 
 export async function analyzeWithLlm(documents: DocumentRecord[], prompt: string): Promise<AnalysisResult> {
   if (!apiKey) throw new Error('GEMINI_API_KEY is not configured. Add it as a Render secret to enable analysis.');
